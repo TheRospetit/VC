@@ -19,12 +19,12 @@ clc,
 
 %% PROBLEM 1 (+0.5) --------------------------------------------------
 % TODO. READ THE CAMERAMAN IMAGE. 
-
+img_cameraman = imread('.\img\cameraman.jpg');
 
 
 %% PROBLEM 2 (+0.5) --------------------------------------------------
 % TODO: SHOW THE CAMERAMAN IMAGE
-
+imshow(img_cameraman)
 
 
 %% PROBELM 3 (+2.0) --------------------------------------------------
@@ -32,17 +32,29 @@ clc,
 
 tic,
 % Your code goes here
-% im_neg = ...
-% figure(1)
-% imshow(im_neg);
+im_neg = img_cameraman;
+[height, width, chanels] = size(im_neg);
+figure(1)
+for i = 1:height
+    for j = 1:width
+        im_neg(i,j) = 255 - im_neg(i,j);
+    end
+end
+imshow(im_neg);
 toc
 
 % TODO. Negative efect using a vectorial instruction
 
 tic,
-% im_neg = ...
-% figure(2)
-% imshow(im_neg);
+im_neg = 255 - img_cameraman;
+figure(2)
+imshow(im_neg);
+toc,
+
+tic,
+im_neg = - img_cameraman; % si hacemos esto tenemos que toda la imagen sale en negro
+figure(3)
+imshow(im_neg);
 toc,
 
 % You sould see that results in figures 1 and 2 are the same but times
