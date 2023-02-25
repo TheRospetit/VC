@@ -22,6 +22,7 @@ clc,
 img_cameraman = imread('.\img\cameraman.jpg');
 
 
+
 %% PROBLEM 2 (+0.5) --------------------------------------------------
 % TODO: SHOW THE CAMERAMAN IMAGE
 imshow(img_cameraman)
@@ -51,11 +52,11 @@ figure(2)
 imshow(im_neg);
 toc,
 
-tic,
-im_neg = - img_cameraman; % si hacemos esto tenemos que toda la imagen sale en negro
-figure(3)
-imshow(im_neg);
-toc,
+% tic,
+% im_neg = - img_cameraman; % si hacemos esto tenemos que toda la imagen sale en negro
+% figure(3)
+% imshow(im_neg);
+% toc,
 
 % You sould see that results in figures 1 and 2 are the same but times
 % are much different.
@@ -63,69 +64,88 @@ toc,
 %% PROBLEM 4 (+2.0) --------------------------------------------------
 
 % TODO. Give some color (red, green or blue)
-% r = ...
-% g = ...
-% b = ...
 
-% im_col = zeros...
-% im_col(:,:,1)=...
-% ...
-% figure(1)
-% imshow(im_col);
+rgb_cameraman = ind2rgb(img_cameraman, colormap);
+rgb_neg = ind2rgb(im_neg, colormap);
+r = rgb_cameraman(:,:,1);
+g = rgb_neg(:,:,2);
+b = rgb_cameraman(:,:,3);
 
-% im_col = cat...
-% figure(2)
-% imshow(im_col);
+im_col = zeros(size(img_cameraman));
+im_col(:,:,1) = r;
+im_col(:,:,2) = g;
+im_col(:,:,3) = b;
+figure(1)
+imshow(im_col);
+
+im_col = cat(3,r, g, b);
+figure(2)
+imshow(im_col);
 
 
 %% PROBLEM 5 (+1.0) --------------------------------------------------
 
-% imwrite ...
-% imwrite ...
+imwrite(im_col, "im_colBMP.bmp")
+imwrite(im_col, "im_colTIF.tif")
+imwrite(im_col, "im_colJPG.jpg")
+imwrite(im_col, "im_colPNG.png")
 % imwrite ...
 
 %% PROBLEM 6 (+1.0) --------------------------------------------------
 
-% lin128=im...
-% figure(1)
-% plot...
+lin128 = img_cameraman(128,:);
+figure(1)
+plot(lin128)
 
-% lin128rgb=im...
-% figure(2)
-% plot...
+
+lin128rgb=im_col(128,:);
+figure(2)
+plot(lin128rgb)
 
 
 %% PROBLEM 7 (+2) ----------------------------------------------------
 
 tic;
-% imhist ...
+figure(1)
+imhist(img_cameraman)
 toc;
 
 
 % TODO. Compute the histogram.
 tic;
-% h=zeros(1,256);
-% for ...
-% plot(h)
+h=zeros(1,256);
+[height, width, channels] = size(img_cameraman);
+
+for i = 1:height
+    for j = 1:width
+        pixel = img_cameraman(i,j);
+        h(1,pixel + 1) = h(1,pixel + 1) + 1;
+    end
+end
+figure(2)
+plot(h)
 toc;
 
 %% PROBLEM 8 Binarize the image text.png (+1) ------------------------
 
 % TODO. Read the image
-% imtext = ...
+imtext = imread('.\img\alice.jpg');
 figure(1)
 imshow(imtext)
+figure(2)
 imhist(imtext)
 
 % TODO. Define 3 different thresholds
-% th1 = ...
-% th2 = ...
-% th3 = ...
+th1 = 200;
+th2 = 150;
+th3 = 230;
 
 % TODO. Apply the 3 thresholds 5 to the image
-% threshimtext1 = ...
-% threshimtext2 = ...
-% threshimtext3 = ...
+imtext_gray = rgb2gray(imtext);
+threshimtext1 = imtext_gray > th1;
+threshimtext2 = imtext_gray > th2;
+threshimtext3 = imtext_gray > th3;
+
 
 % TODO. Show the original image and the segmentations in a subplot
 figure(1)
@@ -149,9 +169,7 @@ title('Original image');
 % (put matlab file lab0.m and python file lab0.py in the same zip file)
 % Example lab0_1234567.zip
 
-
-
-
+%% Espacio para hacer pruebas
 
 
 
