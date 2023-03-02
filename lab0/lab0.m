@@ -116,8 +116,8 @@ tic;
 h=zeros(1,256);
 [height, width, channels] = size(img_cameraman);
 
-for i = 1:height
-    for j = 1:width
+for i = 1:height % height = size(img_cameraman,1)
+    for j = 1:width % width = size(img_cameraman,2)
         pixel = img_cameraman(i,j);
         h(1,pixel + 1) = h(1,pixel + 1) + 1;
     end
@@ -125,6 +125,12 @@ end
 figure(2)
 plot(h)
 toc;
+
+%% OTRA MANERA DE HACER ESTE ANTERIOR EJERCICIO
+
+for i = 1:size(img_cameraman,1)*size(img_cameraman,2) % prod(size(img_cameraman)) || numel(img_cameraman)
+    h(img_cameraman(i) + 1) = h(img_cameraman(i) + 1) + 1;
+end
 
 %% PROBLEM 8 Binarize the image text.png (+1) ------------------------
 
