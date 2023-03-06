@@ -8,6 +8,7 @@ import time
 import cv2
 import numpy as np
 import skimage
+from skimage import io
 from matplotlib import pyplot as plt
 
 ## PROBLEM 1  --------------------------------------------------
@@ -28,15 +29,19 @@ for archivo in files_train:
     train.append(image)             # GUARDO LOS VALORES DE CADA IMAGEN EN UN ARRAY
     # train_rgb.append(imageRGB)
 
+
 ## PROBLEM 2 (+0.5)  --------------------------------------------------
 # TODO: CALCULAR LA MEDIA Y LA DESVIACIÓN ESTÁNDAR
 # CONSEGUIMOS LAS DIMENSIONES DE LA PRIMERA IMAGEN PARA ASÍ GENERAR LA NUEVA QUE SERÁ EL "FONDO"
 # (SUPONGO QUE TODAS TIENEN EL MISMO TAMAÑO)
-
+plt.figure(1)
 mean_train = np.mean(train, axis=0)
 plt.imshow(mean_train)
 plt.show()
-
+plt.figure(2)
+std_train = np.std(train, axis=0)
+plt.imshow(std_train)
+plt.show()
 """mean_trainR = np.mean(train_rgb[:, :, 2])
 mean_trainG = np.mean(train_rgb[:, :, 1])
 mean_trainB = np.mean(train_rgb[:, :, 0])
@@ -45,8 +50,25 @@ plt.imshow(mean_trainRGB)
 plt.show()"""
 # 
 
-## PROBELM 3 (+2.0) --------------------------------------------------
-# TODO. Negative effect using a double for instruction
+## PROBELM 3 (+1.0) --------------------------------------------------
+# TODO. FRAGMENTAR COCHES RESTANDO EL MODELO DEL FONDO
+
+imagenes_a_mirar = 4
+threshold = -0.15
+for image in train:
+    plt.imshow(image)
+    plt.show()
+    plt.figure(2)
+    bin = image - mean_train    # resto el fondo a la imagen
+    plt.imshow(bin)
+    plt.show()
+    bin = bin > threshold   # Binarizo la imagen
+    plt.imshow(bin)
+    plt.show()
+    if imagenes_a_mirar == 0:
+        break
+    else:
+        imagenes_a_mirar -= 1
 
 t = time.time()
 # Your code goes here
