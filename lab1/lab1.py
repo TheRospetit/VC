@@ -34,14 +34,17 @@ for archivo in files_train:
 # TODO: CALCULAR LA MEDIA Y LA DESVIACIÓN ESTÁNDAR
 # CONSEGUIMOS LAS DIMENSIONES DE LA PRIMERA IMAGEN PARA ASÍ GENERAR LA NUEVA QUE SERÁ EL "FONDO"
 # (SUPONGO QUE TODAS TIENEN EL MISMO TAMAÑO)
-plt.figure(1)
 mean_train = np.mean(train, axis=0)
-plt.imshow(mean_train, cmap='gray')
-plt.show()
-plt.figure(2)
 std_train = np.std(train, axis=0)
-plt.imshow(std_train, cmap='gray')
+
+
+plt.imshow(mean_train, cmap='gray') # MOSTRAMOS LA IMAGEN GENERADA CON LA MEDIA
 plt.show()
+
+
+plt.imshow(std_train, cmap='gray')  # MOSTRAMOS LA IMAGEN GENERADA CON LA DESVIACIÓN ESTÁNDAR
+plt.show()
+
 """mean_trainR = np.mean(train_rgb[:, :, 2])
 mean_trainG = np.mean(train_rgb[:, :, 1])
 mean_trainB = np.mean(train_rgb[:, :, 0])
@@ -53,17 +56,16 @@ plt.show()"""
 ## PROBELM 3 (+1.0) --------------------------------------------------
 # TODO. FRAGMENTAR COCHES RESTANDO EL MODELO DEL FONDO
 
-imagenes_a_mirar = 4
-threshold = -0.15
+imagenes_a_mirar = 1
+threshold = 0.2
 for image in train:
     plt.imshow(image, cmap='gray')
     plt.show()
     plt.figure(2)
-    bin = image - mean_train    # resto el fondo a la imagen
+    bin = abs(image - mean_train)    # resto el fondo a la imagen
     plt.imshow(bin, cmap='gray')
     plt.show()
     bin = bin > threshold   # Binarizo la imagen
-    bin = bin < 1
     plt.imshow(bin, cmap='gray')
     plt.show()
     if imagenes_a_mirar == 0:
@@ -71,28 +73,27 @@ for image in train:
     else:
         imagenes_a_mirar -= 1
 
-t = time.time()
-# Your code goes here
-im_neg = np.copy(img_cameraman)
-height, width, _ = im_neg.shape
+alpha = 0.5
+beta = 0.05
 
-for i in range(0, height - 1):
-    for j in range(0, width - 1):
-        # Agafem el valor del píxel actual
-        pixel = im_neg[i, j]
+## PROBELM 4 (+1.0) --------------------------------------------------
+# TODO. FRAGMENTAR COCHES CON UN MODELO MÁS ELABORADO
 
-        # Canviem el color de cada paràmetre del píxel RGB i restem 255
-        pixel[0] = 255 - pixel[0]
-        pixel[1] = 255 - pixel[1]
-        pixel[2] = 255 - pixel[2]
+for image in train:
+    plt.imshow(image, cmap='gray')
+    plt.show()
+    plt.figure(2)
+    bin = abs(image - mean_train)    # resto el fondo a la imagen
+    plt.imshow(bin, cmap='gray')
+    plt.show()
+    bin = bin > threshold * alpha + beta   # Binarizo la imagen
+    plt.imshow(bin, cmap='gray')
+    plt.show()
+    if imagenes_a_mirar == 0:
+        break
+    else:
+        imagenes_a_mirar -= 1
 
-        # Substituïm el valor
-        im_neg[i, j] = pixel
-
-elapsed = time.time() - t
-print('Elapsed time is ' + str(elapsed) + ' seconds')
-plt.imshow(im_neg, 'gray')
-plt.show()
 
 # TODO. Negative effect using a vectorial instruction
 # cv2.imshow('image', img_cameraman)
