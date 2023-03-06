@@ -36,11 +36,11 @@ for archivo in files_train:
 # (SUPONGO QUE TODAS TIENEN EL MISMO TAMAÑO)
 plt.figure(1)
 mean_train = np.mean(train, axis=0)
-plt.imshow(mean_train)
+plt.imshow(mean_train, cmap='gray')
 plt.show()
 plt.figure(2)
 std_train = np.std(train, axis=0)
-plt.imshow(std_train)
+plt.imshow(std_train, cmap='gray')
 plt.show()
 """mean_trainR = np.mean(train_rgb[:, :, 2])
 mean_trainG = np.mean(train_rgb[:, :, 1])
@@ -56,14 +56,15 @@ plt.show()"""
 imagenes_a_mirar = 4
 threshold = -0.15
 for image in train:
-    plt.imshow(image)
+    plt.imshow(image, cmap='gray')
     plt.show()
     plt.figure(2)
     bin = image - mean_train    # resto el fondo a la imagen
-    plt.imshow(bin)
+    plt.imshow(bin, cmap='gray')
     plt.show()
     bin = bin > threshold   # Binarizo la imagen
-    plt.imshow(bin)
+    bin = bin < 1
+    plt.imshow(bin, cmap='gray')
     plt.show()
     if imagenes_a_mirar == 0:
         break
