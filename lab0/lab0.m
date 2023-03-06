@@ -177,6 +177,10 @@ title('Original image');
 
 %% Espacio para hacer pruebas
 
+[height, width, channels] = size(imtext);
+
+subplot(2,2,[1 3]);
+imshow(imtext);
 
 
 
