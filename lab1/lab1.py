@@ -73,11 +73,15 @@ for image in train:
     else:
         imagenes_a_mirar -= 1
 
-alpha = 0.5
-beta = 0.05
+
 
 ## PROBELM 4 (+1.0) --------------------------------------------------
 # TODO. FRAGMENTAR COCHES CON UN MODELO MÁS ELABORADO
+
+alpha = 0.5
+beta = 0.05
+imagenes_a_mirar = 1
+kernel = np.ones((5, 5), np.uint8)
 
 for image in train:
     plt.imshow(image, cmap='gray')
@@ -87,6 +91,14 @@ for image in train:
     plt.imshow(bin, cmap='gray')
     plt.show()
     bin = bin > threshold * alpha + beta   # Binarizo la imagen
+    ### TODO NO ACABA DE FUNCIONAR LA EROSION Y DILATACION
+    ## REALIZO UN OPENING CON TAL DE ELIMINAR EL SONIDO GENERADO POR LAS HOJAS EN LA IMAGEN
+    bin = cv2.erode(bin, kernel, iterations=1)  # EROSIÓN
+    bin = cv2.dilate(bin, kernel, iterations=1) # DILATACIÓN
+
+    # NO DEJA HACER EL OPENING DIRECTAMENTE
+    # bin = cv2.morphologyEx(bin, cv2.MORPH_OPEN, kernel)
+
     plt.imshow(bin, cmap='gray')
     plt.show()
     if imagenes_a_mirar == 0:
@@ -108,9 +120,9 @@ plt.show()
 # You sould see that results in figures 1 and 2 are the same but times
 # are much different.
 
-## PROBLEM 4 (+2.0) --------------------------------------------------
+## PROBLEM 5 (+2.0) --------------------------------------------------
 
-# TODO. Give some color (red, green or blue)
+# TODO. GRABAR UN VIDEO CON LOS RESULTADOS
 r = img_cameraman[:, :, 2]
 g = im_neg2[:, :, 1]
 b = img_cameraman[:, :, 0]
