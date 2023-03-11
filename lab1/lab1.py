@@ -81,7 +81,7 @@ for image in train:
 alpha = 0.5
 beta = 0.05
 imagenes_a_mirar = 1
-kernel = np.ones((5, 5), np.uint8)
+kernel = np.ones((3, 3), np.uint8)
 
 for image in train:
     plt.imshow(image, cmap='gray')
@@ -90,11 +90,22 @@ for image in train:
     bin = abs(image - mean_train)    # resto el fondo a la imagen
     plt.imshow(bin, cmap='gray')
     plt.show()
-    bin = bin > threshold * alpha + beta   # Binarizo la imagen
-    ### TODO NO ACABA DE FUNCIONAR LA EROSION Y DILATACION
+
+    # TODO OPEN Y CLOSE DE LA IMAGEN CON TAL DE TRATARLA Y ELIMINAR SONIDO
+    # REALIZO UN OPEN PARA ELIMINAR EL SONIDO GENERADO POR LAS OJAS
+    bin = cv2.morphologyEx(bin, cv2.MORPH_OPEN, kernel)
+
+    # REALIZO UNOS CUANTOS CLOSE CON TAL DE AMPLIAR LOS COCHES Y ELIMINAR LOS ERRORES DE LA LUNA DELANTERA
+    bin = cv2.morphologyEx(bin, cv2.MORPH_CLOSE, kernel)
+    bin = cv2.morphologyEx(bin, cv2.MORPH_CLOSE, kernel)
+    bin = cv2.morphologyEx(bin, cv2.MORPH_CLOSE, kernel)
+
+
+    bin = int(bin > threshold * alpha + beta)   # Binarizo la imagen
+    ### TODO NO ACABA DE FUNCIONAR LA EROSION Y DILATACION DESPUÉS DE BINARIZAR
     ## REALIZO UN OPENING CON TAL DE ELIMINAR EL SONIDO GENERADO POR LAS HOJAS EN LA IMAGEN
-    bin = cv2.erode(bin, kernel, iterations=1)  # EROSIÓN
-    bin = cv2.dilate(bin, kernel, iterations=1) # DILATACIÓN
+    # bin = cv2.erode(image, kernel, iterations=1)  # EROSIÓN
+    # bin = cv2.dilate(bin, kernel, iterations=1) # DILATACIÓN
 
     # NO DEJA HACER EL OPENING DIRECTAMENTE
     # bin = cv2.morphologyEx(bin, cv2.MORPH_OPEN, kernel)
