@@ -4,7 +4,7 @@
 ######################################################################
 import os
 # Hello! Welcome to the computer vision LAB.
-import time
+import  itertools
 import cv2
 import numpy as np
 import skimage
@@ -21,13 +21,20 @@ files_train = files[1050:1200]  # TRAIN
 files_test = files[1200:1350]   # TEST
 
 train = []
-train_rgb = []
+# train_rgb = []
 for archivo in files_train:
     path = './highway/input/' + archivo
     image = skimage.io.imread(path, as_gray=True)     # LEO CADA IMAGEN EN GRIS
     # imageRGB = skimage.io.imread(path, as_gray=False)     # LEO CADA IMAGEN EN RGB
     train.append(image)             # GUARDO LOS VALORES DE CADA IMAGEN EN UN ARRAY
     # train_rgb.append(imageRGB)
+
+test = []
+for archivo in files_test:
+    path = './highway/input/' + archivo
+    image = skimage.io.imread(path, as_gray=True)  # LEO CADA IMAGEN EN GRIS
+    # imageRGB = skimage.io.imread(path, as_gray=False)     # LEO CADA IMAGEN EN RGB
+    test.append(image)
 
 
 ## PROBLEM 2 (+0.5)  --------------------------------------------------
@@ -75,197 +82,116 @@ for image in train:
 
 
 
-## PROBELM 4 (+1.0) --------------------------------------------------
+## PROBELM 4 (+1.0) &  PROBELM 5 (+2.0)--------------------------------------------------
 # TODO. FRAGMENTAR COCHES CON UN MODELO MÁS ELABORADO
+out = []
+mean_test = np.mean(test, axis=0)
+
+height, width = train[0].shape
+size = (width, height)
 
 alpha = 0.5
 beta = 0.05
+
 imagenes_a_mirar = 1
+
 kernel = np.ones((3, 3), np.uint8)
 
-for image in train:
-    plt.imshow(image, cmap='gray')
-    plt.show()
-    plt.figure(2)
-    bin = abs(image - mean_train)    # resto el fondo a la imagen
-    plt.imshow(bin, cmap='gray')
-    plt.show()
+video_bg_train = cv2.VideoWriter('resultsBgTrain.mp4', 0, 30, size)
+video_bg_test = cv2.VideoWriter('resultsBgTest.mp4', 0, 30, size)
+
+i = 0
+
+for image in test:
+    # plt.imshow(image, cmap='gray')
+    # plt.show()
+    i += 1
+    image_name_train = './outputs/train/outputImage' + str(i) + '.png'
+    image_name_test = './outputs/test/outputImage' + str(i) + '.png'
+
+    binTrain = abs(image - mean_train)    # resto el fondo a la imagen
+    binTest = abs(image - mean_test)
+    # plt.imshow(bin, cmap='gray')
+    # plt.show()
 
     # TODO OPEN Y CLOSE DE LA IMAGEN CON TAL DE TRATARLA Y ELIMINAR SONIDO
     # REALIZO UN OPEN PARA ELIMINAR EL SONIDO GENERADO POR LAS OJAS
-    bin = cv2.morphologyEx(bin, cv2.MORPH_OPEN, kernel)
+    binTrain = cv2.morphologyEx(binTrain, cv2.MORPH_OPEN, kernel)
 
     # REALIZO UNOS CUANTOS CLOSE CON TAL DE AMPLIAR LOS COCHES Y ELIMINAR LOS ERRORES DE LA LUNA DELANTERA
-    bin = cv2.morphologyEx(bin, cv2.MORPH_CLOSE, kernel)
-    bin = cv2.morphologyEx(bin, cv2.MORPH_CLOSE, kernel)
-    bin = cv2.morphologyEx(bin, cv2.MORPH_CLOSE, kernel)
+    binTrain = cv2.morphologyEx(binTrain, cv2.MORPH_CLOSE, kernel)
+    binTrain = cv2.morphologyEx(binTrain, cv2.MORPH_CLOSE, kernel)
+    binTrain = cv2.morphologyEx(binTrain, cv2.MORPH_CLOSE, kernel)
+
+    # OPEN TEST
+    binTest = cv2.morphologyEx(binTest, cv2.MORPH_OPEN, kernel)
+    # CLOSE TEST
+    binTest = cv2.morphologyEx(binTest, cv2.MORPH_CLOSE, kernel)
+    binTest = cv2.morphologyEx(binTest, cv2.MORPH_CLOSE, kernel)
+    binTest = cv2.morphologyEx(binTest, cv2.MORPH_CLOSE, kernel)
 
 
-    bin = int(bin > threshold * alpha + beta)   # Binarizo la imagen
+    binTrain = binTrain > threshold * alpha + beta   # Binarizo la imagen
+    binTest = binTest > threshold * alpha + beta  # Binarizo la imagen
+    out.append(binTest)
+
+    plt.imsave(image_name_train, np.uint8(binTrain * 255)) # Guardo la imagen obtenida
+    plt.imsave(image_name_test, np.uint8(binTest * 255))  # Guardo la imagen obtenida
+
+    video_bg_train.write(cv2.imread(image_name_train)) # Creo el video leyendo la imagen que acabo de guardar en la carpeta
+    video_bg_test.write(cv2.imread(image_name_test))
+
     ### TODO NO ACABA DE FUNCIONAR LA EROSION Y DILATACION DESPUÉS DE BINARIZAR
     ## REALIZO UN OPENING CON TAL DE ELIMINAR EL SONIDO GENERADO POR LAS HOJAS EN LA IMAGEN
     # bin = cv2.erode(image, kernel, iterations=1)  # EROSIÓN
     # bin = cv2.dilate(bin, kernel, iterations=1) # DILATACIÓN
-
     # NO DEJA HACER EL OPENING DIRECTAMENTE
     # bin = cv2.morphologyEx(bin, cv2.MORPH_OPEN, kernel)
 
-    plt.imshow(bin, cmap='gray')
-    plt.show()
-    if imagenes_a_mirar == 0:
-        break
-    else:
+    if imagenes_a_mirar != 0:
         imagenes_a_mirar -= 1
+        plt.imshow(binTrain, cmap='gray')
+        plt.figure(2)
+        plt.imshow(binTest, cmap='gray')
+        plt.show()
+
+## PROBELM 6 (+1.0) --------------------------------------------------
+# TODO. EVALUA TUS RESULTADOS
+# ADQUIERO LAS IMAGENES DE GT
+groundtruth_test = os.listdir('./highway/groundtruth')
+groundtruth_test = groundtruth_test[1200:1350]
+
+out = np.uint8(out * 255)
+
+# CARGO LAS IMAGENES DEL GT
+gt = []
+for archivo in groundtruth_test:
+    path = './highway/groundtruth/' + archivo
+    image = skimage.io.imread(path, as_gray=True)  # LEO CADA IMAGEN EN GRIS
+    # imageRGB = skimage.io.imread(path, as_gray=False)     # LEO CADA IMAGEN EN RGB
+    gt.append(image)
+
+accuracys = []
+for (test_image, ground_image) in zip(out, gt):
+    accuracy = np.mean(ground_image == (test_image * 255))
+    accuracys.append(accuracy)
+
+accuracy = np.mean(accuracys) * 100
+print('Accuracy: = ' + str(accuracy) + '%')
 
 
-# TODO. Negative effect using a vectorial instruction
-# cv2.imshow('image', img_cameraman)
-t = time.time()
-im_neg2 = 255 - img_cameraman
-elapsed = time.time() - t
-print('Elapsed time is ' + str(elapsed) + ' seconds')
-plt.figure(2)
-plt.imshow(im_neg2, 'gray')
-plt.show()
-
-# You sould see that results in figures 1 and 2 are the same but times
-# are much different.
-
-## PROBLEM 5 (+2.0) --------------------------------------------------
-
-# TODO. GRABAR UN VIDEO CON LOS RESULTADOS
-r = img_cameraman[:, :, 2]
-g = im_neg2[:, :, 1]
-b = img_cameraman[:, :, 0]
-
-# im_col = np.zeros(img_cameraman.shape, dtype="uint8")
-# im_col[:, :, 0] = b
-# im_col[:, :, 1] = g
-# im_col[:, :, 2] = r
-# plt.imshow(im_col)
-# plt.show()
-
-im_col = np.dstack((b, g, r))
-plt.imshow(im_col)
-plt.show()
-
-## PROBLEM 5 (+1.0) --------------------------------------------------
-
-
-cv2.imwrite('imagenPNG.png', im_col)
-cv2.imwrite('imagenBMP.bmp', im_col)
-cv2.imwrite('imagenTIF.tif', im_col)
-cv2.imwrite('imagenJPG.jpg', im_col)
-# cv2.imwrite ...
-# cv2.imwrite ...
-
-## PROBLEM 6 (+1.0) --------------------------------------------------
-
-lin128 = img_cameraman[127, :, :]
-mean = np.mean(lin128)
-plt.axhline(y=mean, color='r', linestyle='-')
-plt.plot(lin128)
-plt.show()
-
-plt.clf()
-lin128rgb = im_col[127, :, :]
-mean2 = np.mean(lin128rgb)
-plt.axhline(y=mean2, color='r', linestyle='-')
-plt.plot(lin128rgb)
-plt.show()
-
-## PROBLEM 7 (+2) ----------------------------------------------------
-
-# TODO. Compute the histogram.
-# cv2.imshow('image', img_cameraman)
-img_cameraman_grey = cv2.cvtColor(img_cameraman, cv2.COLOR_BGR2GRAY)
-t = time.time()
-# hist, bins = np.histogram(img_cameraman_grey, bins=256, range=(0, 1))
-plt.title("Histograma de Cameraman")
-plt.xlabel("Valor de gris")
-plt.ylabel("Nombre de pixels")
-
-plt.hist(img_cameraman_grey.ravel(), 256)
-plt.show()
-elapsed = time.time() - t
-print('Elapsed time is ' + str(elapsed) + ' seconds')
-# print(hist)
-
-
-
-t = time.time()
-h = np.zeros((1, 256))
-height, width = img_cameraman_grey.shape
-for i in range(0, height):
-    for j in range(0, width):
-        # Agafem el valor del píxel actual
-        pixel = img_cameraman_grey[i, j]
-        h[0][pixel] = h[0][pixel] + 1
-plt.plot(h[0])
-plt.show()
-elapsed = time.time() - t
-print('Elapsed time is ' + str(elapsed) + ' seconds')
-
-## PROBLEM 8 Binarize the image text.png (+1) ------------------------
-
-# TODO. Read the image
-imtext = cv2.imread('./img/alice.jpg')
-plt.imshow(imtext)
-plt.show()
-imtext_grey = cv2.cvtColor(imtext, cv2.COLOR_BGR2GRAY)
-plt.hist(imtext.ravel(), 256)
-plt.show()
-
-# TODO. Define 3 different thresholds
-th1 = 200
-th2 = 150
-th3 = 230
-
-
-# TODO. Apply the 3 thresholds 5 to the image
-
-threshimtext1 = np.copy(imtext_grey)
-threshimtext2 = np.copy(imtext_grey)
-threshimtext3 = np.copy(imtext_grey)
-threshimtext1 = np.where(threshimtext1 > th1, 1, 0)
-threshimtext2 = np.where(threshimtext2 > th2, 1, 0)
-threshimtext3 = np.where(threshimtext3 > th3, 1, 0)
-
-"""height, width = imtext_grey.shape
-for i in range(0, height):
-    for j in range(0, width):
-        # Agafem el valor del píxel actual
-        pixel = imtext_grey[i, j]
-        if pixel > th1:
-            threshimtext1[i, j] = 1
-        else:
-            threshimtext1[i, j] = 0
-        if pixel > 150:
-            threshimtext2[i, j] = 1
-        else:
-            threshimtext2[i, j] = 0
-        if pixel > 230:
-            threshimtext3[i, j] = 1
-        else:
-            threshimtext3[i, j] = 0"""
-
-# TODO. Show the original image and the segmentations in a subplot
-fig, ax = plt.subplots(nrows=2, ncols=3)
-ax[0, 0].remove()
-ax[0, 1].imshow(imtext)
-ax[0, 1].set_title('Original image')
-ax[0, 2].remove()
-ax[1, 0].imshow(threshimtext1)
-ax[1, 1].imshow(threshimtext2)
-ax[1, 2].imshow(threshimtext3)
-plt.show()
+## PROBELM 8 (+1.0) --------------------------------------------------
+# TODO. VELOCIDAD?
+"""Si obtenemos tenemos la frecuencia de disparo de la cámara (el timpo que hay entre imágenes)
+ y sabemos la distáncia de la carretera si también usamos el número de imagenes en las que aparece 
+ podemos calcular la velocidad cómo distancia/tiempo dónde tiempo sería n.Imagenes * freq."""
 
 ## THE END -----------------------------------------------------------
 # Well done, you finished this lab! Now, remember to deliver it 
 # properly on Caronte.
 
 # File name:
-# lab0_NIU.zip 
-# (put matlab file lab0.m and python file lab0.py in the same zip file)
-# Example lab0_1234567.zip
+# lab1_NIU.zip
+# (put matlab file lab0.m and python file lab1.py in the same zip file)
+# Example lab1_1234567.zip
 #
