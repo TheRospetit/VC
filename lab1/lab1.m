@@ -11,13 +11,25 @@ clc,
 
 %% PROBLEM 1 (+0.5) --------------------------------------------------
 % TODO. LEER LAS IMAGENES DE LA CARPETA INPUT DE HIGHWAY 
+files = dir('.\highway\input\*.jpg');
+% im_color = imread(fullfile(files(1).folder, files(1).name));
+% im_grey = rgb2gray(im_color);
+% imshow(im_grey)
+files_train = files(1051:1200); % TRAIN
+files_test = files(1201:1350); % TEST
 
-
-
+train = cell(length(files_train), 1);
+test = [];
+N = sum(arrayfun(@(files_train) ~isempty(files_train.name),files_train));
+for archivo=1:N
+    im_color = imread(fullfile(files_train(archivo).folder, files_train(archivo).name));
+    im_grey = rgb2gray(im_color);
+    train{archivo} = im_grey;
+end
 
 %% PROBLEM 2 (+0.5) --------------------------------------------------
-% TODO: SHOW THE CAMERAMAN IMAGE
-imshow(img_cameraman)
+% TODO. CALCULAR LA MEDIA Y LA DESVIACIÓN ESTÁNDAR
+a = sum(arrayfun(@(files_train) ~isempty(files_train.name),files_train));
 
 
 %% PROBELM 3 (+2.0) --------------------------------------------------
