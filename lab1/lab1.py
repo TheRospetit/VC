@@ -184,7 +184,11 @@ print('Accuracy: = ' + str(accuracy) + '%')
 # TODO. VELOCIDAD?
 """Si obtenemos tenemos la frecuencia de disparo de la cámara (el timpo que hay entre imágenes)
  y sabemos la distáncia de la carretera si también usamos el número de imagenes en las que aparece 
- podemos calcular la velocidad cómo distancia/tiempo dónde tiempo sería n.Imagenes * freq."""
+ podemos calcular la velocidad cómo distancia/tiempo dónde tiempo sería n.Imagenes * freq.
+ 
+ PROS: Es un calculo relativamente simple de realizar y se puede automatizar
+ 
+ CONS: Obtenemos una velocidad final, como si esta fuera constante cosa que muy probablemente no lo es"""
 
 ## THE END -----------------------------------------------------------
 # Well done, you finished this lab! Now, remember to deliver it 
