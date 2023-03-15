@@ -188,7 +188,8 @@ print('Accuracy: = ' + str(accuracy) + '%')
  
  PROS: Es un calculo relativamente simple de realizar y se puede automatizar
  
- CONS: Obtenemos una velocidad final, como si esta fuera constante cosa que muy probablemente no lo es"""
+ CONS: Obtenemos una velocidad final, como si esta fuera constante cosa que muy probablemente no lo es
+ Se puede complicar si dos coches se cruzan ya que al binarizar no sabremos bien bien cual es cual y puede generar errores."""
 
 ## THE END -----------------------------------------------------------
 # Well done, you finished this lab! Now, remember to deliver it 
