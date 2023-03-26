@@ -16,27 +16,33 @@ from PIL import ImageChops
 from matplotlib import pyplot as plt
 
 
-def correlacion_cruzada(matriz1, matriz2):
+def correlacion_cruzada(matriz1, matriz2): # La correlación debería ser lo mismo que la convolución con la máscara rotada 180 grados pero la función correlate2d() ya se encarga de ello
     # Calcular la correlación cruzada
     corr = signal.correlate2d(matriz2, matriz1, mode='same') # Tienen que ser al revés en G se usa R como máscara
+    # conv = signal.convolve2d(matriz2, np.flip(np.flip(matriz1, 0), 1))
     # Encontrar todos los valores máximos
     max_vals = np.where(corr == np.max(corr))
+    # max_vals_conv = np.where(conv == np.max(conv))
 
     # Encontrar la posición más cercana al centro de la matriz
     centro = np.array(matriz1.shape) // 2   # 80 95
     distancias = [np.sqrt((i - centro[0]) ** 2 + (j - centro[1]) ** 2) for i, j in zip(max_vals[0], max_vals[1])]
+    # distancias2 = [np.sqrt((i - centro[0]) ** 2 + (j - centro[1]) ** 2) for i, j in zip(max_vals_conv[0], max_vals_conv[1])]
     idx_max = np.argmin(distancias)
+    # idx_max2 = np.argmin(distancias2)
     max_pos = (max_vals[0][idx_max], max_vals[1][idx_max])
+    # max_pos2 = (max_vals_conv[0][idx_max2], max_vals_conv[1][idx_max2])
 
     return max_pos
 
 
-def normxcorr2(template, image, mode="full"):
+def normxcorr2(image, template, mode="full"):
     template = template - np.mean(template)
     image = image - np.mean(image)
 
     a1 = np.ones(template.shape)
-    # Faster to flip up down and left right then use fftconvolve instead of scipy's correlate
+    # Para hacer la correlación paso a paso debemos hacer la convolución pero rotando la máscara primero de izquierda a derecha u luego de arriba a abajo
+    # Y después de esta rotación hacer la convolución
     ar = np.flipud(np.fliplr(template))
     out = fftconvolve(image, ar.conj(), mode=mode)
 
@@ -58,13 +64,43 @@ def normxcorr2(template, image, mode="full"):
     return out
 
 
+def fourier_transform(máscara, imagen): # En Fourier una convolución o correlación tenemos que transformar las señales a fourier, multiplicarlas y seguidamente hacer la trnsformada inversa
+    # Calcular la correlación cruzada
+    fft_mask = np.fft.fft2(máscara)
+    fft_image = np.fft.fft2(imagen)
+    fft_conjunto = fft_image * np.conj(fft_mask)
+    fft_conjunto = np.fft.fftshift(np.fft.ifft2(fft_conjunto))
+    # plt.figure('FFT')
+    fft = np.abs(np.fft.ifft2(fft_image * np.conj(fft_mask)))
+    # plt.imshow(fft)
+    # plt.show()
+    shape = np.unravel_index(np.argmax(fft_conjunto), fft_conjunto.shape)
+
+    return shape
+
+def fourier_norm(máscara, imagen): # En Fourier una convolución o correlación tenemos que transformar las señales a fourier, multiplicarlas y seguidamente hacer la trnsformada inversa
+    # Calcular la correlación cruzada
+    fft_mask = np.fft.fft2(máscara)
+    fft_mask = fft_mask/abs(fft_mask)
+    fft_image = np.fft.fft2(imagen)
+    fft_image = fft_image / abs(fft_image)
+    fft_conjunto = fft_image * np.conj(fft_mask)
+    fft_conjunto = np.fft.fftshift(np.fft.ifft2(fft_conjunto))
+    # plt.figure('FFT')
+    fft = np.abs(np.fft.ifft2(fft_image * np.conj(fft_mask)))
+    # plt.imshow(fft)
+    # plt.show()
+    shape = np.unravel_index(np.argmax(fft_conjunto), fft_conjunto.shape)
+
+    return shape
 
 
 ## PROBLEM 1  --------------------------------------------------
 # TODO LEER LAS IMAGENES DE LA CARPETA
-files = os.listdir('./imatges/petites')
+files = os.listdir('./imatges/petites') # Puede ser ./imatges/petites o ./imatges/grans
 
 # TODO. CARGAMOS UNA PRIMERA IMAGEN PARA HACER TODAS LAS PRUEBAS
+i = 1
 for imagen in files:
     path = './imatges/petites/' + imagen
     image = skimage.io.imread(path, as_gray=False)
@@ -93,11 +129,8 @@ for imagen in files:
     R = R[rec_height:-rec_height, rec_width:-rec_width]
     G = G[rec_height:-rec_height, rec_width:-rec_width]
     B = B[rec_height:-rec_height, rec_width:-rec_width]
-    height_fin, width_fin = R.shape
 
-    """plt.figure('Inicial')
-    rgb_img = np.dstack((R, G, B))
-    plt.imshow(rgb_img)
+    height_fin, width_fin = R.shape
 
     # TODO. BUSCO EL PUNTO CON MAYOR CORRELACIÓN EL CUAL ESTÉ MÁS CERCA DEL CENTRO DE LA MATRIZ
     corr_rg = correlacion_cruzada(R, G)
@@ -106,6 +139,13 @@ for imagen in files:
     corr_rg_norm = normxcorr2(R, G)
     corr_rb_norm = normxcorr2(R, B)
 
+    fft_rg = fourier_transform(R, G)
+    fft_rb = fourier_transform(R, B)
+
+    fft_rg_norm = fourier_transform(R, G)
+    fft_rb_norm = fourier_transform(R, B)
+
+
     # TODO. MUEVO CADA MATRIZ A LA POSICIÓN QUE LE TOQUE
 
     # Calculamos cuánto tenemos que desplazar los canales G y B Im1 -> (85, 100)
@@ -115,18 +155,39 @@ for imagen in files:
     shift_g_norm = [corr_rg_norm[0] - R.shape[0] // 2, corr_rg_norm[1] - R.shape[1] // 2]
     shift_b_norm = [corr_rb_norm[0] - R.shape[0] // 2, corr_rb_norm[1] - R.shape[1] // 2]
 
-    # TODO Desplazamos los canales G y B
-    #g_shifted = np.roll(np.roll(G, shift_g[0]//2, axis=0), shift_g[1]//2, axis=1)
+    shift_fft_rg = [fft_rg[0] - R.shape[0] // 2, fft_rg[1] - R.shape[1] // 2]
+    shift_fft_rb = [fft_rb[0] - R.shape[0] // 2, fft_rb[1] - R.shape[1] // 2]
+
+    shift_fft_rg_norm = [fft_rg_norm[0] - R.shape[0] // 2, fft_rg_norm[1] - R.shape[1] // 2]
+    shift_fft_rb_norm = [fft_rb_norm[0] - R.shape[0] // 2, fft_rb_norm[1] - R.shape[1] // 2]
+
+    # TODO Desplazamos los canales G
+   
     M = np.float32([[1, 0, shift_g[0]], [0, 1, shift_g[1]]])
     g_shifted = cv2.warpAffine(G, M, (width_fin, height_fin))
+    
     M = np.float32([[1, 0, shift_g_norm[0]], [0, 1, shift_g_norm[1]]])
-    g_shifted_norm = np.roll(np.roll(G, shift_g_norm[0] // 2, axis=0), shift_g_norm[1] // 2, axis=1)
-    # g_shifted = ndimage.shift(G, shift_g)
-    # g_shifted = ImageChops.offset(G, shift_g[0], shift_g[1])
-    # b_shifted = np.roll(np.roll(B, shift_b[0]//2, axis=0), shift_b[1]//2, axis=1)
-    M = np.float32([[1, 0, -shift_b[0]],[0, 1, shift_b[1]]])
+    g_shifted_norm = cv2.warpAffine(G, M, (width_fin, height_fin))
+
+    M = np.float32([[1, 0, shift_fft_rg[0]], [0, 1, shift_fft_rg[1]]])
+    g_shifted_fft = cv2.warpAffine(G, M, (width_fin, height_fin))
+
+    M = np.float32([[1, 0, shift_fft_rg_norm[0]], [0, 1, shift_fft_rg_norm[1]]])
+    g_shifted_fft_norm = cv2.warpAffine(G, M, (width_fin, height_fin))
+
+    # TODO Desplazamos los canales b
+    
+    M = np.float32([[1, 0, shift_b[0]],[0, 1, shift_b[1]]])
     b_shifted = cv2.warpAffine(B,M, (width_fin, height_fin))
-    b_shifted_norm = np.roll(np.roll(B, shift_b_norm[0] // 2, axis=0), shift_b_norm[1] // 2, axis=1)
+    
+    M = np.float32([[1, 0, shift_b_norm[0]],[0, 1, shift_b_norm[1]]])
+    b_shifted_norm = cv2.warpAffine(B,M, (width_fin, height_fin))
+
+    M = np.float32([[1, 0, shift_fft_rb[0]], [0, 1, shift_fft_rb[1]]])
+    b_shifted_fft = cv2.warpAffine(B, M, (width_fin, height_fin))
+
+    M = np.float32([[1, 0, shift_fft_rb_norm[0]], [0, 1, shift_fft_rb_norm[1]]])
+    b_shifted_fft_norm = cv2.warpAffine(B, M, (width_fin, height_fin))
 
     # Juntamos los tres canales en una sola imagen
     #plt.figure('R')
@@ -135,39 +196,66 @@ for imagen in files:
     #plt.imshow(g_shifted)
     #plt.figure('B')
     #plt.imshow(b_shifted)
+
+    # TODO. MOSTRAMOS LAS IMAGENES QUE HEMOS ACABADO DE FORMAR
+    plt.figure('Inicial')
+    rgb_img = np.dstack((R, G, B))
+    path = './outputs/ ' + str(i) +'_01_inicial_color.png'
+    plt.imshow(rgb_img)
+    plt.imsave(path, rgb_img)
     plt.figure('Correlació')
-    rgb_new = np.dstack((R, g_shifted, b_shifted))
-    plt.imshow(rgb_new)
+    rgb_corr = np.dstack((R, g_shifted, b_shifted))
+    path = './outputs/ ' + str(i) +'_02__correlacio_color.png'
+    plt.imshow(rgb_corr)
+    plt.imsave(path, rgb_corr)
     plt.figure('Correlació Normalitzada')
-    rgb_new_norm = np.dstack((R, g_shifted_norm, b_shifted_norm))
-    plt.imshow(rgb_new_norm)
-    plt.show()"""
+    rgb_corr_norm = np.dstack((R, g_shifted_norm, b_shifted_norm))
+    path = './outputs/ ' + str(i) +'_03__correlacio_norm_color.png'
+    plt.imshow(rgb_corr_norm)
+    plt.imsave(path, rgb_corr_norm)
+    plt.figure('Transformada Fourier')
+    rgb_fft = np.dstack((R, g_shifted_fft, b_shifted_fft))
+    path = './outputs/ ' + str(i) +'_04__fft_color.png'
+    plt.imshow(rgb_fft)
+    plt.imsave(path, rgb_fft)
+    plt.figure('Transformada Fourier Normalitzada')
+    rgb_fft_norm = np.dstack((R, g_shifted_fft_norm, b_shifted_fft_norm))
+    path = './outputs/ ' + str(i) +'_05__fft_norm_color.png'
+    plt.imshow(rgb_fft_norm)
+    plt.imsave(path, rgb_fft_norm)
+    plt.show()
+
+    i += 1
 
     # TODO TEST
-    matriz = np.random.randint(0, 256, size=(height_fin, width_fin))
+    """matriz = np.random.randint(0, 255, size=(height_fin, width_fin))
+
+    # Crear dos copias de la matriz original
     matriz_movimiento1 = np.copy(matriz)
     matriz_movimiento2 = np.copy(matriz)
 
     # Aplicar un movimiento de 2 a la derecha y 3 hacia abajo a la primera matriz
-    matriz_movimiento1 = np.roll(matriz_movimiento1, shift=2, axis=1)
-    matriz_movimiento1 = np.roll(matriz_movimiento1, shift=3, axis=0)
+    matriz_movimiento1 = np.roll(matriz_movimiento1, shift=3, axis=1)
+    matriz_movimiento1 = np.roll(matriz_movimiento1, shift=5, axis=0)
 
     # Aplicar un movimiento de 5 a la izquierda y 1 hacia arriba a la segunda matriz
     matriz_movimiento2 = np.roll(matriz_movimiento2, shift=-5, axis=1)
     matriz_movimiento2 = np.roll(matriz_movimiento2, shift=-1, axis=0)
 
+    # Recortar 5 píxeles de cada borde de las tres matrices
     matriz_recortada = matriz[5:-5, 5:-5]
     matriz_movimiento1_recortada = matriz_movimiento1[5:-5, 5:-5]
     matriz_movimiento2_recortada = matriz_movimiento2[5:-5, 5:-5]
 
     corr_rg = correlacion_cruzada(matriz_recortada, matriz_movimiento1_recortada)
+
     corr_rb = correlacion_cruzada(matriz_recortada, matriz_movimiento2_recortada)
 
     # TODO. MUEVO CADA MATRIZ A LA POSICIÓN QUE LE TOQUE
 
     # Calculamos cuánto tenemos que desplazar los canales G y B Im1 -> (85, 100)
-    shift_g = [corr_rg[0] - R.shape[0] // 2, corr_rg[1] - R.shape[1] // 2]
-    shift_b = [corr_rb[0] - R.shape[0] // 2, corr_rb[1] - R.shape[1] // 2]
+    shift_g = [corr_rg[0] - matriz_recortada.shape[0] // 2, corr_rg[1] - matriz_recortada.shape[1] // 2]
+    shift_b = [corr_rb[1] - matriz_recortada.shape[1] // 2, corr_rb[0] - matriz_recortada.shape[0] // 2] # INVERITDO
 
     corr_rg_norm = normxcorr2(matriz_recortada, matriz_movimiento1_recortada)
     corr_rb_norm = normxcorr2(matriz_recortada, matriz_movimiento2_recortada)
@@ -175,8 +263,8 @@ for imagen in files:
     # TODO. MUEVO CADA MATRIZ A LA POSICIÓN QUE LE TOQUE
 
     # Calculamos cuánto tenemos que desplazar los canales G y B Im1 -> (85, 100)
-    shift_g_norm = [corr_rg_norm[0] - R.shape[0] // 2, corr_rg_norm[1] - R.shape[1] // 2]
-    shift_b_norm = [corr_rb_norm[0] - R.shape[0] // 2, corr_rb_norm[1] - R.shape[1] // 2]
+    shift_g_norm = [corr_rg_norm[0] - matriz_recortada.shape[0] // 2, corr_rg_norm[1] - matriz_recortada.shape[1] // 2]
+    shift_b_norm = [corr_rb_norm[0] - matriz_recortada.shape[0] // 2, corr_rb_norm[1] - matriz_recortada.shape[1] // 2]
 
     height_fina, width_fina = matriz_movimiento1_recortada.shape
     M = np.float32([[1, 0, (shift_g[0])], [0, 1, (shift_g[1])]])
@@ -189,6 +277,6 @@ for imagen in files:
     plt.figure('Correlació')
     rgb_new = np.dstack((matriz_recortada, g_shifted, b_shifted))
     plt.imshow(rgb_new)
-    plt.show()
+    plt.show()"""
 
 
