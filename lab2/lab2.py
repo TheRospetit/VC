@@ -19,7 +19,8 @@ from matplotlib import pyplot as plt
 def correlacion_cruzada(matriz1, matriz2): # La correlación debería ser lo mismo que la convolución con la máscara rotada 180 grados pero la función correlate2d() ya se encarga de ello
     # Calcular la correlación cruzada
     corr = signal.correlate2d(matriz2, matriz1, mode='same') # Tienen que ser al revés en G se usa R como máscara
-
+    # plt.imshow(corr)
+    # plt.show()
     # Crea una figura 3D
     """fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -179,14 +180,15 @@ i = 1
 for imagen in files:
     path = './imatges/petites/' + imagen
     image = skimage.io.imread(path, as_gray=False)
+    image = image.astype(np.float32)/255
     # image = skimage.io.imread('peppers.png', as_gray=False)
 
     # TODO. SEPARO LA IMAGEN EN TRES COMPONENTES
     height, width = image.shape
     tercera_parte = height // 3  # Si le pongo los dos divisores lo que hago es que pille el int entero y no el float
-    R = image[:tercera_parte, :]
+    B = image[:tercera_parte, :]
     G = image[tercera_parte:tercera_parte * 2, :]
-    B = image[tercera_parte * 2:, :]
+    R = image[tercera_parte * 2:, :]
 
     # TODO. REESTRUCTURO LAS IMAGENES PARA QUE TODAS TENGAN EL MISMO TAMAÑO PARA CUANDO LAS TENGA QUE FUSIONAR
     height1, width1 = R.shape
