@@ -19,6 +19,26 @@ from matplotlib import pyplot as plt
 def correlacion_cruzada(matriz1, matriz2): # La correlación debería ser lo mismo que la convolución con la máscara rotada 180 grados pero la función correlate2d() ya se encarga de ello
     # Calcular la correlación cruzada
     corr = signal.correlate2d(matriz2, matriz1, mode='same') # Tienen que ser al revés en G se usa R como máscara
+
+    # Crea una figura 3D
+    """fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # Crea las coordenadas X e Y para la matriz
+    x, y = np.meshgrid(np.arange(corr.shape[0]), np.arange(corr.shape[1]))
+    # Aplana la matriz y convierte los valores en una lista
+    z = corr.flatten()
+    # Crea una barra de color para los valores de la matriz
+    colores = plt.cm.jet(z / np.amax(z))
+    # Dibuja la matriz en 3D
+    ax.bar3d(x.ravel(), y.ravel(), np.zeros_like(z), 1, 1, z, color=colores)
+    # Configura los límites de los ejes
+    ax.set_xlim(0, corr.shape[0])
+    ax.set_ylim(0, corr.shape[1])
+    ax.set_zlim(0, np.amax(z))
+    # Muestra la figura
+    path = './outputs/zz-01_Correlacio.png'
+    plt.savefig(path)"""
+    # plt.show()
     # conv = signal.convolve2d(matriz2, np.flip(np.flip(matriz1, 0), 1))
     # Encontrar todos los valores máximos
     max_vals = np.where(corr == np.max(corr))
@@ -57,10 +77,30 @@ def normxcorr2(image, template, mode="full"):
 
     # Remove any divisions by 0 or very close to 0
     out[np.where(np.logical_not(np.isfinite(out)))] = 0
+
+    """fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # Crea las coordenadas X e Y para la matriz
+    x, y = np.meshgrid(np.arange(out.shape[0]), np.arange(out.shape[1]))
+    # Aplana la matriz y convierte los valores en una lista
+    z = out.flatten()
+    # Crea una barra de color para los valores de la matriz
+    colores = plt.cm.jet(z / np.amax(z))
+    # Dibuja la matriz en 3D
+    ax.bar3d(x.ravel(), y.ravel(), np.zeros_like(z), 1, 1, z, color=colores)
+    # Configura los límites de los ejes
+    ax.set_xlim(0, out.shape[0])
+    ax.set_ylim(0, out.shape[1])
+    ax.set_zlim(0, np.amax(z))
+    # Muestra la figura
+    path = './outputs/zz-02_Correlacio_Norm.png'
+    plt.savefig(path)"""
+
     max_vals = np.where(out == np.max(out))
     out = []
     out.append(max_vals[0][0] // 2)
     out.append(max_vals[1][0] // 2)
+
     return out
 
 
@@ -71,10 +111,28 @@ def fourier_transform(máscara, imagen): # En Fourier una convolución o correla
     fft_conjunto = fft_image * np.conj(fft_mask)
     fft_conjunto = np.fft.fftshift(np.fft.ifft2(fft_conjunto))
     # plt.figure('FFT')
-    fft = np.abs(np.fft.ifft2(fft_image * np.conj(fft_mask)))
+    """fft = np.abs(np.fft.ifft2(fft_image * np.conj(fft_mask)))
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # Crea las coordenadas X e Y para la matriz
+    x, y = np.meshgrid(np.arange(fft.shape[0]), np.arange(fft.shape[1]))
+    # Aplana la matriz y convierte los valores en una lista
+    z = fft.flatten()
+    # Crea una barra de color para los valores de la matriz
+    colores = plt.cm.jet(z / np.amax(z))
+    # Dibuja la matriz en 3D
+    ax.bar3d(x.ravel(), y.ravel(), np.zeros_like(z), 1, 1, z, color=colores)
+    # Configura los límites de los ejes
+    ax.set_xlim(0, fft.shape[0])
+    ax.set_ylim(0, fft.shape[1])
+    ax.set_zlim(0, np.amax(z))
+    # Muestra la figura
+    path = './outputs/zz-03_FFT.png'
+    plt.savefig(path)"""
     # plt.imshow(fft)
     # plt.show()
     shape = np.unravel_index(np.argmax(fft_conjunto), fft_conjunto.shape)
+
 
     return shape
 
@@ -87,7 +145,24 @@ def fourier_norm(máscara, imagen): # En Fourier una convolución o correlación
     fft_conjunto = fft_image * np.conj(fft_mask)
     fft_conjunto = np.fft.fftshift(np.fft.ifft2(fft_conjunto))
     # plt.figure('FFT')
-    fft = np.abs(np.fft.ifft2(fft_image * np.conj(fft_mask)))
+    """fft = np.abs(np.fft.ifft2(fft_image * np.conj(fft_mask)))
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    # Crea las coordenadas X e Y para la matriz
+    x, y = np.meshgrid(np.arange(fft.shape[0]), np.arange(fft.shape[1]))
+    # Aplana la matriz y convierte los valores en una lista
+    z = fft.flatten()
+    # Crea una barra de color para los valores de la matriz
+    colores = plt.cm.jet(z / np.amax(z))
+    # Dibuja la matriz en 3D
+    ax.bar3d(x.ravel(), y.ravel(), np.zeros_like(z), 1, 1, z, color=colores)
+    # Configura los límites de los ejes
+    ax.set_xlim(0, fft.shape[0])
+    ax.set_ylim(0, fft.shape[1])
+    ax.set_zlim(0, np.amax(z))
+    # Muestra la figura
+    path = './outputs/zz-04_FFT_NORM.png'
+    plt.savefig(path)"""
     # plt.imshow(fft)
     # plt.show()
     shape = np.unravel_index(np.argmax(fft_conjunto), fft_conjunto.shape)
@@ -200,31 +275,30 @@ for imagen in files:
     # TODO. MOSTRAMOS LAS IMAGENES QUE HEMOS ACABADO DE FORMAR
     plt.figure('Inicial')
     rgb_img = np.dstack((R, G, B))
-    path = './outputs/ ' + str(i) +'_01_inicial_color.png'
+    # path = './outputs/ ' + str(i) +'_01_inicial_color.png'
     plt.imshow(rgb_img)
-    plt.imsave(path, rgb_img)
+    # plt.imsave(path, rgb_img)
     plt.figure('Correlació')
     rgb_corr = np.dstack((R, g_shifted, b_shifted))
-    path = './outputs/ ' + str(i) +'_02__correlacio_color.png'
+    # path = './outputs/ ' + str(i) +'_02__correlacio_color.png'
     plt.imshow(rgb_corr)
-    plt.imsave(path, rgb_corr)
+    # plt.imsave(path, rgb_corr)
     plt.figure('Correlació Normalitzada')
     rgb_corr_norm = np.dstack((R, g_shifted_norm, b_shifted_norm))
-    path = './outputs/ ' + str(i) +'_03__correlacio_norm_color.png'
+    # path = './outputs/ ' + str(i) +'_03__correlacio_norm_color.png'
     plt.imshow(rgb_corr_norm)
-    plt.imsave(path, rgb_corr_norm)
+    # plt.imsave(path, rgb_corr_norm)
     plt.figure('Transformada Fourier')
     rgb_fft = np.dstack((R, g_shifted_fft, b_shifted_fft))
-    path = './outputs/ ' + str(i) +'_04__fft_color.png'
+    # path = './outputs/ ' + str(i) +'_04__fft_color.png'
     plt.imshow(rgb_fft)
-    plt.imsave(path, rgb_fft)
+    # plt.imsave(path, rgb_fft)
     plt.figure('Transformada Fourier Normalitzada')
     rgb_fft_norm = np.dstack((R, g_shifted_fft_norm, b_shifted_fft_norm))
-    path = './outputs/ ' + str(i) +'_05__fft_norm_color.png'
+    # path = './outputs/ ' + str(i) +'_05__fft_norm_color.png'
     plt.imshow(rgb_fft_norm)
-    plt.imsave(path, rgb_fft_norm)
+    # plt.imsave(path, rgb_fft_norm)
     plt.show()
-
     i += 1
 
     # TODO TEST
