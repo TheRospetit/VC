@@ -5,6 +5,8 @@
 import os
 # Hello! Welcome to the computer vision LAB.
 import itertools
+import time
+
 import cv2
 import numpy as np
 from scipy import signal
@@ -16,29 +18,47 @@ from PIL import ImageChops
 from matplotlib import pyplot as plt
 
 
+def splitImagen(image):
+    # TODO. SEPARO LA IMAGEN EN TRES COMPONENTES
+    height, width = image.shape
+    tercera_parte = height // 3  # Si le pongo los dos divisores lo que hago es que pille el int entero y no el float
+    B = image[:tercera_parte, :]
+    G = image[tercera_parte:tercera_parte * 2, :]
+    R = image[tercera_parte * 2:, :]
+
+    # TODO. REESTRUCTURO LAS IMAGENES PARA QUE TODAS TENGAN EL MISMO TAMAÑO PARA CUANDO LAS TENGA QUE FUSIONAR
+    height1, width1 = R.shape
+    height2, width2 = G.shape
+    height3, width3 = B.shape
+
+    height_img = min(height1, height2, height3)
+    R = R[-height_img:, :]
+    G = G[-height_img:, :]
+    B = B[-height_img:, :]
+
+    # TODO. RECORTO UN PORCENTAJE LOS BORDES DE LA IMAGEN PARA EVITAR PROBLEMAS
+    rec_height = int(height_img * 0.1)
+    rec_width = int(width1 * 0.1)
+    R = R[rec_height:-rec_height, rec_width:-rec_width]
+    G = G[rec_height:-rec_height, rec_width:-rec_width]
+    B = B[rec_height:-rec_height, rec_width:-rec_width]
+
+    return R, G, B
+
+
+def moveImage(image, center, movement):
+    # TODO. CALCULO EL MOVIMIENTO A REALIZAR
+    shift = [movement[0] - center.shape[0] // 2, movement[1] - center.shape[1] // 2] # Calculamos el movimiento a realizar
+
+    # TODO. MUEVO CADA MATRIZ A LA POSICIÓN QUE LE TOQUE
+    M = np.float32([[1, 0, shift[0]], [0, 1, shift[1]]]) # Matriz de translación
+    return cv2.warpAffine(image, M, (width_fin, height_fin)) # Devolvemos la imagen movida
+
+
 def correlacion_cruzada(matriz1, matriz2): # La correlación debería ser lo mismo que la convolución con la máscara rotada 180 grados pero la función correlate2d() ya se encarga de ello
     # Calcular la correlación cruzada
     corr = signal.correlate2d(matriz2, matriz1, mode='same') # Tienen que ser al revés en G se usa R como máscara
     # plt.imshow(corr)
-    # plt.show()
-    # Crea una figura 3D
-    """fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    # Crea las coordenadas X e Y para la matriz
-    x, y = np.meshgrid(np.arange(corr.shape[0]), np.arange(corr.shape[1]))
-    # Aplana la matriz y convierte los valores en una lista
-    z = corr.flatten()
-    # Crea una barra de color para los valores de la matriz
-    colores = plt.cm.jet(z / np.amax(z))
-    # Dibuja la matriz en 3D
-    ax.bar3d(x.ravel(), y.ravel(), np.zeros_like(z), 1, 1, z, color=colores)
-    # Configura los límites de los ejes
-    ax.set_xlim(0, corr.shape[0])
-    ax.set_ylim(0, corr.shape[1])
-    ax.set_zlim(0, np.amax(z))
-    # Muestra la figura
-    path = './outputs/zz-01_Correlacio.png'
-    plt.savefig(path)"""
     # plt.show()
     # conv = signal.convolve2d(matriz2, np.flip(np.flip(matriz1, 0), 1))
     # Encontrar todos los valores máximos
@@ -137,6 +157,7 @@ def fourier_transform(máscara, imagen): # En Fourier una convolución o correla
 
     return shape
 
+
 def fourier_norm(máscara, imagen): # En Fourier una convolución o correlación tenemos que transformar las señales a fourier, multiplicarlas y seguidamente hacer la trnsformada inversa
     # Calcular la correlación cruzada
     fft_mask = np.fft.fft2(máscara)
@@ -182,89 +203,75 @@ for imagen in files:
     image = skimage.io.imread(path, as_gray=False)
     image = image.astype(np.float32)/255
     # image = skimage.io.imread('peppers.png', as_gray=False)
-
-    # TODO. SEPARO LA IMAGEN EN TRES COMPONENTES
-    height, width = image.shape
-    tercera_parte = height // 3  # Si le pongo los dos divisores lo que hago es que pille el int entero y no el float
-    B = image[:tercera_parte, :]
-    G = image[tercera_parte:tercera_parte * 2, :]
-    R = image[tercera_parte * 2:, :]
-
-    # TODO. REESTRUCTURO LAS IMAGENES PARA QUE TODAS TENGAN EL MISMO TAMAÑO PARA CUANDO LAS TENGA QUE FUSIONAR
-    height1, width1 = R.shape
-    height2, width2 = G.shape
-    height3, width3 = B.shape
-
-    height_img = min(height1, height2, height3)
-    R = R[-height_img:, :]
-    G = G[-height_img:, :]
-    B = B[-height_img:, :]
-
-    # TODO. RECORTO UN PORCENTAJE LOS BORDES DE LA IMAGEN PARA EVITAR PROBLEMAS
-    rec_height = int(height_img * 0.1)
-    rec_width = int(width1 * 0.1)
-    R = R[rec_height:-rec_height, rec_width:-rec_width]
-    G = G[rec_height:-rec_height, rec_width:-rec_width]
-    B = B[rec_height:-rec_height, rec_width:-rec_width]
+    start_time = time.time()
+    R, G, B = splitImagen(image)
+    end_recort = time.time() - start_time
+    print('Tiempo recorte imagen = ', end_recort)
 
     height_fin, width_fin = R.shape
 
     # TODO. BUSCO EL PUNTO CON MAYOR CORRELACIÓN EL CUAL ESTÉ MÁS CERCA DEL CENTRO DE LA MATRIZ
+    corr_time = time.time()
     corr_rg = correlacion_cruzada(R, G)
     corr_rb = correlacion_cruzada(R, B)
+    corr_time = time.time() - corr_time
+    print('Tiempo correlación = ', corr_time)
 
+    corr_norm_time = time.time()
     corr_rg_norm = normxcorr2(R, G)
     corr_rb_norm = normxcorr2(R, B)
+    corr_norm_time = time.time() - corr_norm_time
+    print('Tiempo correlación normalizada = ', corr_norm_time)
 
+    fft_time = time.time()
     fft_rg = fourier_transform(R, G)
     fft_rb = fourier_transform(R, B)
+    fft_time = time.time() - fft_time
+    print('Tiempo FFT = ', fft_time)
 
+    fft_norm_time = time.time()
     fft_rg_norm = fourier_transform(R, G)
     fft_rb_norm = fourier_transform(R, B)
+    fft_norm_time = time.time() - fft_norm_time
+    print('Tiempo FFT Norm (Fase) = ', fft_norm_time, '\n')
 
+    # TODO Desplazamos los canales G y B de cada imagen y calculamos cuanto timepo tardan
 
-    # TODO. MUEVO CADA MATRIZ A LA POSICIÓN QUE LE TOQUE
+    # TODO. CORR
+    corr_time_recort = time.time()
 
-    # Calculamos cuánto tenemos que desplazar los canales G y B Im1 -> (85, 100)
-    shift_g = [corr_rg[0] - R.shape[0] // 2, corr_rg[1] - R.shape[1] // 2]
-    shift_b = [corr_rb[0] - R.shape[0] // 2, corr_rb[1] - R.shape[1] // 2]
+    g_shifted = moveImage(G, R, corr_rg)
+    b_shifted = moveImage(B, R, corr_rb)
 
-    shift_g_norm = [corr_rg_norm[0] - R.shape[0] // 2, corr_rg_norm[1] - R.shape[1] // 2]
-    shift_b_norm = [corr_rb_norm[0] - R.shape[0] // 2, corr_rb_norm[1] - R.shape[1] // 2]
+    corr_time_recort = time.time() - corr_time_recort
+    print('Tiempo mover correlación = ', corr_time_recort)
 
-    shift_fft_rg = [fft_rg[0] - R.shape[0] // 2, fft_rg[1] - R.shape[1] // 2]
-    shift_fft_rb = [fft_rb[0] - R.shape[0] // 2, fft_rb[1] - R.shape[1] // 2]
+    # TODO. CORR NORM
+    corr_norm_time_recort = time.time()
 
-    shift_fft_rg_norm = [fft_rg_norm[0] - R.shape[0] // 2, fft_rg_norm[1] - R.shape[1] // 2]
-    shift_fft_rb_norm = [fft_rb_norm[0] - R.shape[0] // 2, fft_rb_norm[1] - R.shape[1] // 2]
+    g_shifted_norm = moveImage(G, R, corr_rg_norm)
+    b_shifted_norm = moveImage(B, R, corr_rb_norm)
 
-    # TODO Desplazamos los canales G
-   
-    M = np.float32([[1, 0, shift_g[0]], [0, 1, shift_g[1]]])
-    g_shifted = cv2.warpAffine(G, M, (width_fin, height_fin))
-    
-    M = np.float32([[1, 0, shift_g_norm[0]], [0, 1, shift_g_norm[1]]])
-    g_shifted_norm = cv2.warpAffine(G, M, (width_fin, height_fin))
+    corr_norm_time_recort = time.time() - corr_norm_time_recort
+    print('Tiempo mover correlación normalizada = ', corr_norm_time_recort)
 
-    M = np.float32([[1, 0, shift_fft_rg[0]], [0, 1, shift_fft_rg[1]]])
-    g_shifted_fft = cv2.warpAffine(G, M, (width_fin, height_fin))
+    # TODO. FFT
+    fft_time_recort = time.time()
 
-    M = np.float32([[1, 0, shift_fft_rg_norm[0]], [0, 1, shift_fft_rg_norm[1]]])
-    g_shifted_fft_norm = cv2.warpAffine(G, M, (width_fin, height_fin))
+    g_shifted_fft = moveImage(G, R, fft_rg)
+    b_shifted_fft = moveImage(B, R, fft_rb)
 
-    # TODO Desplazamos los canales b
-    
-    M = np.float32([[1, 0, shift_b[0]],[0, 1, shift_b[1]]])
-    b_shifted = cv2.warpAffine(B,M, (width_fin, height_fin))
-    
-    M = np.float32([[1, 0, shift_b_norm[0]],[0, 1, shift_b_norm[1]]])
-    b_shifted_norm = cv2.warpAffine(B,M, (width_fin, height_fin))
+    fft_time_recort = time.time() - fft_time_recort
+    print('Tiempo mover FFT = ', fft_time_recort)
 
-    M = np.float32([[1, 0, shift_fft_rb[0]], [0, 1, shift_fft_rb[1]]])
-    b_shifted_fft = cv2.warpAffine(B, M, (width_fin, height_fin))
+    # TODO. FFT NORM
+    fft_norm_time_recort = time.time()
 
-    M = np.float32([[1, 0, shift_fft_rb_norm[0]], [0, 1, shift_fft_rb_norm[1]]])
-    b_shifted_fft_norm = cv2.warpAffine(B, M, (width_fin, height_fin))
+    g_shifted_fft_norm = moveImage(G, R, fft_rg_norm)
+    b_shifted_fft_norm = moveImage(B, R, corr_rb_norm)
+
+    fft_norm_time_recort = time.time() - fft_norm_time_recort
+    print('Tiempo mover FFT normalizada (Fase) = ', fft_norm_time_recort)
 
     # Juntamos los tres canales en una sola imagen
     #plt.figure('R')
@@ -275,33 +282,43 @@ for imagen in files:
     #plt.imshow(b_shifted)
 
     # TODO. MOSTRAMOS LAS IMAGENES QUE HEMOS ACABADO DE FORMAR
+    time_save = time.time()
+
     plt.figure('Inicial')
     rgb_img = np.dstack((R, G, B))
-    # path = './outputs/ ' + str(i) +'_01_inicial_color.png'
+    path = './outputs/ ' + str(i) +'_01_inicial_color.png'
     plt.imshow(rgb_img)
-    # plt.imsave(path, rgb_img)
+    plt.imsave(path, rgb_img)
+
     plt.figure('Correlació')
     rgb_corr = np.dstack((R, g_shifted, b_shifted))
-    # path = './outputs/ ' + str(i) +'_02__correlacio_color.png'
+    path = './outputs/ ' + str(i) +'_02__correlacio_color.png'
     plt.imshow(rgb_corr)
-    # plt.imsave(path, rgb_corr)
+    plt.imsave(path, rgb_corr)
+
     plt.figure('Correlació Normalitzada')
     rgb_corr_norm = np.dstack((R, g_shifted_norm, b_shifted_norm))
-    # path = './outputs/ ' + str(i) +'_03__correlacio_norm_color.png'
+    path = './outputs/ ' + str(i) +'_03__correlacio_norm_color.png'
     plt.imshow(rgb_corr_norm)
-    # plt.imsave(path, rgb_corr_norm)
+    plt.imsave(path, rgb_corr_norm)
+
     plt.figure('Transformada Fourier')
     rgb_fft = np.dstack((R, g_shifted_fft, b_shifted_fft))
-    # path = './outputs/ ' + str(i) +'_04__fft_color.png'
+    path = './outputs/ ' + str(i) +'_04__fft_color.png'
     plt.imshow(rgb_fft)
-    # plt.imsave(path, rgb_fft)
+    plt.imsave(path, rgb_fft)
+
     plt.figure('Transformada Fourier Normalitzada')
     rgb_fft_norm = np.dstack((R, g_shifted_fft_norm, b_shifted_fft_norm))
-    # path = './outputs/ ' + str(i) +'_05__fft_norm_color.png'
+    path = './outputs/ ' + str(i) +'_05__fft_norm_color.png'
     plt.imshow(rgb_fft_norm)
-    # plt.imsave(path, rgb_fft_norm)
-    plt.show()
+    plt.imsave(path, rgb_fft_norm)
+
+    time_save = time.time() - time_save
+    print('Tiempo para guardar las cuatro imágenes nuevas de ', imagen, ' = ', time_save)
+    #plt.show()
     i += 1
+    break
 
     # TODO TEST
     """matriz = np.random.randint(0, 255, size=(height_fin, width_fin))
