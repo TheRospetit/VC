@@ -55,3 +55,4 @@ for i = 1:length(files)
     rgb_new = cat(3, R, g_shifted, b_shifted);
     imshow(rgb_new);
 end
+
