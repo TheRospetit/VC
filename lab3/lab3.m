@@ -4,7 +4,7 @@ close all,
 clc,
 
 % Cargo las imágenes.
-imageDir = fullfile('imatges', 'ee*');
+imageDir = fullfile('imatges', 'test*');
 imageScene = imageDatastore(imageDir);
 
 % Muestra un montaje de las imágenes.
@@ -124,6 +124,7 @@ title('Panoramica CON Aalphablend');
 figure;
 imshow(panorama2)
 title('Panoramica SIN Aalphablend');
+imwrite(panorama, 'resultado_test.png', 'png') % GUARDO LA IMAGEN FINAL
 
 %% NOTAS
 % Los puntos siempre los he escogido en el orden de arriba izquierda,
@@ -137,7 +138,7 @@ clearvars,
 close all,
 clc,
 % Cargo las imágenes.
-imageDir = fullfile('imatges', 'ciencies*');
+imageDir = fullfile('imatges', 'test*');
 imageScene = imageDatastore(imageDir);
 
 % Display images to be stitched.
@@ -180,6 +181,7 @@ for n = 2:numeroImagenes
     matchedPointsPrev = puntosPrevios(indexPairs(:,2), :); 
 
     % Muestro los puntos que se han correlacionados
+    figure;
     showMatchedFeatures(grayImage1, grayImage2, matchedPoints, matchedPointsPrev);
     
     % Estimo la posible transformada que pueda necesitar I(n) e I(n-1).
@@ -250,7 +252,7 @@ for i = 1:numeroImagenes
 end
 
 figure;
-imshow(panorama)
+imshow(panorama);
 %% FUNCIONES
 function blended_image = my_blend_with_mask(image1, image2, mask)
 
